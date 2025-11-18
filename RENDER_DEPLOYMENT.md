@@ -54,12 +54,12 @@ In Render dashboard, go to **Environment** tab and add:
 | Key | Value | Example |
 |-----|-------|---------|
 | `SPRING_MAIL_HOST` | `smtp.gmail.com` | smtp.gmail.com |
-| `SPRING_MAIL_PORT` | `587` | 587 |
+| `SPRING_MAIL_PORT` | `587` or `465` | 587 |
 | `SPRING_MAIL_USERNAME` | Your Gmail | yourname@gmail.com |
 | `SPRING_MAIL_PASSWORD` | App Password | abcd efgh ijkl mnop |
-| `SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH` | `true` | true |
-| `SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE` | `true` | true |
 | `PORT` | `8080` | 8080 |
+
+**Note:** If port 587 times out, try port **465** (SSL) instead.
 
 ### How to Get Gmail App Password:
 1. Go to Google Account → Security
