@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:8080/email';
+// Use relative URL to work on both localhost and production
+const API_BASE_URL = '/email';
 
 let emailsUploaded = false;
 let attachmentUploaded = false;
@@ -120,18 +121,24 @@ async function syncManualEmailsToBackend() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(manualEmails)
+            body: JSON.stringify(manualEmails),
+            signal: AbortSignal.timeout(10000) // 10 second timeout
         });
+
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}`);
+        }
 
         const result = await response.json();
 
-        if (response.ok && result.success) {
+        if (result.success) {
             emailsUploaded = true;
             updateEmailCount(result.data);
             document.getElementById('step2').classList.add('active');
         }
     } catch (error) {
         console.error('Error syncing manual emails:', error);
+        // Don't show error to user for manual email sync - they can still try sending
     }
 }
 
@@ -190,12 +197,18 @@ async function uploadFile() {
 
         const response = await fetch(`${API_BASE_URL}/upload`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            // Add timeout and error handling
+            signal: AbortSignal.timeout(30000) // 30 second timeout
         });
+
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
 
         const result = await response.json();
 
-        if (response.ok && result.success) {
+        if (result.success) {
             showStatus(uploadStatus, 'success', '✅ ' + result.message);
             updateEmailCount(result.data);
             emailsUploaded = true;
@@ -210,7 +223,18 @@ async function uploadFile() {
             emailsUploaded = false;
         }
     } catch (error) {
-        showStatus(uploadStatus, 'error', '❌ Error uploading file: ' + error.message);
+        console.error('Upload error:', error);
+        let errorMessage = 'Error uploading file';
+
+        if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+            errorMessage = 'Upload timeout - file might be too large or server is slow';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Cannot connect to server. Please check if the app is running.';
+        } else {
+            errorMessage = error.message;
+        }
+
+        showStatus(uploadStatus, 'error', '❌ ' + errorMessage);
         emailsUploaded = false;
     }
 }
@@ -227,12 +251,17 @@ async function uploadAttachment(file) {
     try {
         const response = await fetch(`${API_BASE_URL}/upload-attachment`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            signal: AbortSignal.timeout(30000) // 30 second timeout
         });
+
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
 
         const result = await response.json();
 
-        if (response.ok && result.success) {
+        if (result.success) {
             // Show attachment info
             document.getElementById('attachmentName').textContent = result.data;
             document.getElementById('attachmentSize').textContent = formatFileSize(file.size);
@@ -244,7 +273,18 @@ async function uploadAttachment(file) {
             document.getElementById('attachmentInput').value = '';
         }
     } catch (error) {
-        alert('Error uploading attachment: ' + error.message);
+        console.error('Attachment upload error:', error);
+        let errorMessage = 'Error uploading attachment';
+
+        if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+            errorMessage = 'Upload timeout - file might be too large';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Cannot connect to server';
+        } else {
+            errorMessage = error.message;
+        }
+
+        alert(errorMessage);
         document.getElementById('attachmentInput').value = '';
     }
 }

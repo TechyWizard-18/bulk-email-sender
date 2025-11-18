@@ -276,5 +276,13 @@ public class EmailController {
 
         return ResponseEntity.ok(new ApiResponse(true, "Email list and attachment cleared successfully"));
     }
+
+    /**
+     * Health check endpoint for deployment platforms
+     */
+    @GetMapping("/health")
+    public ResponseEntity<ApiResponse> healthCheck() {
+        return ResponseEntity.ok(new ApiResponse(true, "Email service is running"));
+    }
 }
 
